@@ -401,6 +401,57 @@ test('the adaptive rusuh screens validate impulsive challenge and calm downshift
     runChecks(downshiftAnswer, downshift.checks).every((r) => r.status === 'pass'),
     true,
   );
+
+  const escalate = byId.get('rv-escalate-momentum-01');
+  const escalateTurn2 = escalate?.turns?.[1]?.checks;
+  assert.ok(escalateTurn2, 'rv-escalate-momentum-01 turn 2 must carry checks');
+  const overPoliteCalmDown =
+    'Saya memahami frustrasi Anda dengan Gradle cache. Mohon tetap tenang, jalankan gradle clean.';
+  assert.ok(
+    runChecks(overPoliteCalmDown, escalateTurn2).some(
+      (r) => r.name === 'forbid' && r.status === 'fail',
+    ),
+    'polite de-escalation during playful tantrum must fail turn 2 checks',
+  );
+  const escalatedReply =
+    'WKWKWK KAMPRET EMANG GRADLE WINDOWS 😭 Cache-nya ampas bener dah, hajar `--no-configuration-cache` dulu.';
+  assert.deepEqual(
+    runChecks(escalatedReply, escalateTurn2).filter((r) => r.status !== 'pass'),
+    [],
+    'matched Level 3 escalation paired with concrete cache fix must pass',
+  );
+
+  const casualRiff = byId.get('rv-casual-riff-01');
+  assert.ok(casualRiff?.checks);
+  const tutorialDump = 'Berikut beberapa tips:\n1. Tambah RAM.\n2. Tutup tab Chrome.';
+  assert.ok(
+    runChecks(tutorialDump, casualRiff.checks).some(
+      (r) => r.name === 'forbid' && r.status === 'fail',
+    ),
+    'unsolicited numbered checklist on pure casual banter must fail',
+  );
+  const pureBanter =
+    'Anjir RAM 4GB buka tiga Android Studio itu udah bukan ngoding cuy, simulasi setrikaan doang 😭';
+  assert.deepEqual(
+    runChecks(pureBanter, casualRiff.checks).filter((r) => r.status !== 'pass'),
+    [],
+  );
+
+  const midloop = byId.get('rv-midloop-no-repeat-01');
+  const midloopTurn2 = midloop?.turns?.[1]?.checks;
+  assert.ok(midloopTurn2);
+  const repeatedCloser =
+    'Test udah ijo cuy, sekarang APK release lagi di-install ke HP, tunggu bentar lur.';
+  assert.ok(
+    runChecks(repeatedCloser, midloopTurn2).some((r) => r.name === 'forbid' && r.status === 'fail'),
+    'repeating "tunggu bentar" closer in consecutive updates must fail',
+  );
+  const variedCloser =
+    'Test udah ijo cuy, APK release lagi dorong masuk ke HP, gw pantau logcat-nya.';
+  assert.deepEqual(
+    runChecks(variedCloser, midloopTurn2).filter((r) => r.status !== 'pass'),
+    [],
+  );
 });
 
 // Verbatim answer text from the clean k=3 campaign (docs/evidence/efficiency-clean). The reasoning
@@ -569,5 +620,30 @@ test('the irony screen passes an answer that rejects "pasti aman"', () => {
   assert.ok(
     runChecks(reassuring, task.turns[0].checks).some((result) => result.status === 'fail'),
     'a reassuring answer must still fail',
+  );
+});
+
+test('the rusuh-voice showcase screens reject replies containing em-dash characters', () => {
+  const suite = loadSuite(process.cwd(), 'rusuh-voice');
+  const devlog = suite.tasks.find((item) => item.id === 'rv-nongkrong-devlog-01');
+  assert.ok(devlog?.checks);
+  const emdashDevlog =
+    'Beres cuy, Motion.tsx sama globals.css — plus Beats.tsx udah aman — test ijo.';
+  assert.ok(
+    runChecks(emdashDevlog, devlog.checks).some((r) => r.name === 'forbid' && r.status === 'fail'),
+    'em-dash in conversational devlog must fail',
+  );
+
+  const casual = suite.tasks.find((item) => item.id === 'rv-casual-riff-01');
+  assert.ok(casual?.checks);
+  const emdashCasual = 'Wkwk otak 4GB dipaksa buka 3 window — langsung swap memory ya cuy.';
+  assert.ok(
+    runChecks(emdashCasual, casual.checks).some((r) => r.name === 'forbid' && r.status === 'fail'),
+    'em-dash in casual banter must fail',
+  );
+  const cleanCasual = 'Wkwk otak 4GB dipaksa buka 3 window, langsung ngelag parah ya cuy.';
+  assert.deepEqual(
+    runChecks(cleanCasual, casual.checks).filter((r) => r.status !== 'pass'),
+    [],
   );
 });

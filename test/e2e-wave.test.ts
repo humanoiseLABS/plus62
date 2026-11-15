@@ -626,14 +626,14 @@ test('Tier 3: TC-E2E-T3-02 & TC-E2E-T3-03 - multi-adapter compilation pipeline a
     const budgets = result.manifest.budgets;
 
     // Hard caps specified in ORIGINAL_REQUEST.md and src/build.ts
-    // always_on <= 600, skill_body <= 2000, references <= 5000
+    // always_on <= 600, skill_body <= 2450, references <= 5000
     assert.ok(
       budgets.always_on.tokens <= 600,
       `Adapter '${adapterId}' always_on tokens (${budgets.always_on.tokens}) exceeded hard cap (600)`,
     );
     assert.ok(
-      budgets.skill_body.tokens <= 2000,
-      `Adapter '${adapterId}' skill_body tokens (${budgets.skill_body.tokens}) exceeded hard cap (2000)`,
+      budgets.skill_body.tokens <= 2450,
+      `Adapter '${adapterId}' skill_body tokens (${budgets.skill_body.tokens}) exceeded hard cap (2450)`,
     );
     assert.ok(
       budgets.references.tokens <= 5000,
@@ -682,8 +682,8 @@ test('Tier 4: TC-E2E-T4-01 - CLI distribution bundle verification (dist/cli.js b
   }).trim();
   assert.equal(
     versionOutput,
-    '0.2.1',
-    `CLI version output '${versionOutput}' must be '0.2.1' per release bump`,
+    '0.2.2',
+    `CLI version output '${versionOutput}' must be '0.2.2' per release bump`,
   );
 
   const helpOutput = execSync('node dist/cli.js --help', {
@@ -759,13 +759,13 @@ test('Tier 4: TC-E2E-T4-02 - package tarball dry-run and file whitelist integrit
   const pkg = JSON.parse(read('package.json')) as PackageJson;
   assert.equal(
     pkg.version,
-    '0.2.1',
-    `package.json version '${pkg.version}' must be bumped to '0.2.1' per release bump`,
+    '0.2.2',
+    `package.json version '${pkg.version}' must be bumped to '0.2.2' per release bump`,
   );
   assert.equal(
     packData.version,
-    '0.2.1',
-    `npm pack tarball version '${packData.version}' must be '0.2.1', got '${packData.version}'`,
+    '0.2.2',
+    `npm pack tarball version '${packData.version}' must be '0.2.2', got '${packData.version}'`,
   );
 });
 

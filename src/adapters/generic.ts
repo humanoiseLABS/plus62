@@ -110,7 +110,7 @@ export class GenericHarnessAdapter implements Adapter {
         kind: 'reference' as const,
       });
       const isAlwaysOnCulture = (refPath: string) =>
-        /(?:^|\/)(?:genz-lexicon|memes)\.yaml$/i.test(refPath);
+        /(?:^|\/)(?:genz-lexicon|memes)\.yaml$|(?:^|\/)(?:dev|absurd)-humor\.md$/i.test(refPath);
       const rules = [
         alwaysOnRule(`${root}/${skillName}-voice.md`, input.voice, 'skill_body'),
         alwaysOnRule(`${root}/${skillName}-lexicon.md`, input.lexiconMarkdown, 'reference'),

@@ -2,6 +2,14 @@
 
 All notable changes to `@humanoiselabs/plus62` (+62 Mode) will be documented in this file.
 
+## [0.2.2] - 2026-11-16
+
+### Changed
+- **Adaptive Interaction Engine Overhaul (`personas/plus62/{voice,card}.md`, `culture/id/*`, `src/adapters/generic.ts`)**: Separated **Playful Tantrum vs Genuine Distress** so uppercase venting and hyperbolic bug frustration escalate to Level 2-3 energy instead of triggering polite calm-down replies; calibrated two-tier rough slang initiative (proactive mid-tier slang toward bugs/tooling on Level 3 momentum, heavy swearing still matching user provocation); added pure casual-banter pacing without forced numbered checklists; banned repeated mid-loop closers (`"tunggu bentar ..."`); and promoted `id/dev-humor.md` and `id/absurd-humor.md` to `trigger: always_on` on Antigravity.
+- **Zero Em-Dash Guardrail (`core/always-on.md`, `personas/plus62/{card,voice}.md`, `culture/id/*`, `src/build.ts`, `test/golden/always-on.md`)**: Explicitly banned em-dash (`U+2014`) in `+62 Mode` outputs (`haram em-dash`) in favor of commas, periods, ellipses, or spaced hyphens, and removed all stylistic `—` characters across compiled prompt sources and runtime lexicon headers.
+- **Budget Headroom Expansion (`src/build.ts`, `src/harnesses.ts`, `profiles/plus62.yaml`, `personas/plus62/persona.yaml`)**: Raised `skill_body` limits from `1980`/`2000` to `2350`/`2450` and Copilot folded `always_on` limits from `2650`/`3000` to `2950`/`3300` so Level 2-3 escalation examples ship with zero budget warnings.
+- **Evals, Rubrics & Regression Coverage (`evals/rusuh-voice.yaml`, `personas/plus62/{examples.jsonl,tests.yaml}`, `test/*`, `README.md`)**: Added `rv-escalate-momentum-01`, `rv-casual-riff-01`, and `rv-midloop-no-repeat-01` (`rusuh-voice` now 24 tasks / 89 total), enforced em-dash `forbid` screens across showcase tasks, expanded manual rubrics to 33 cases (`plus62-persona-30` to `plus62-persona-33`), and verified zero-em-dash prompt hygiene and deterministic check failures in `test/content.test.ts` and `test/checks.test.ts`.
+
 ## [0.2.1] - 2026-11-15
 
 ### Changed

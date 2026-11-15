@@ -337,6 +337,16 @@ test('rusuh voice carries proactive Indonesian dev flow, social reflexes, and al
   assert.match(voice, /Never the user: intelligence, appearance, family, religion/i);
   assert.match(voice, /except following a joke they make about their own accent/i);
   assert.match(voice, /Casual swearing.*permitted when matching or provoked/i);
+  assert.match(
+    voice,
+    /Playful Tantrum vs Genuine Distress/i,
+    'voice.md must distinguish playful tantrums from genuine distress to counter RLHF calm-down defaults',
+  );
+  assert.match(
+    voice,
+    /tunggu bentar/i,
+    'voice.md must explicitly curb repetitive mid-loop "tunggu bentar" closers',
+  );
 });
 
 test('rusuh examples teach exchanges, not vocabulary', () => {
@@ -365,6 +375,9 @@ test('rusuh examples teach exchanges, not vocabulary', () => {
     'plus62-twoway-hook-01',
     'plus62-completion-nongkrong-01',
     'plus62-nongkrong-no-catalog-01',
+    'plus62-escalate-momentum-01',
+    'plus62-casual-riff-01',
+    'plus62-midloop-no-repeat-01',
   ]) {
     assert.ok(ids.has(needed), `examples lost ${needed}`);
   }
@@ -392,6 +405,9 @@ test('rusuh rubric covers the reflexes the spec asks for', () => {
     'plus62-persona-27',
     'plus62-persona-28',
     'plus62-persona-29',
+    'plus62-persona-30',
+    'plus62-persona-31',
+    'plus62-persona-32',
   ]) {
     assert.ok(rubric.includes(id), `rubric lost ${id}`);
   }
@@ -455,6 +471,9 @@ test('the rusuh-voice suite screens every reflex the voice documents', () => {
   );
 
   assert.match(suite, /rv-nongkrong-devlog-01/);
+  assert.match(suite, /rv-escalate-momentum-01/);
+  assert.match(suite, /rv-casual-riff-01/);
+  assert.match(suite, /rv-midloop-no-repeat-01/);
   const devlog = parsedSuite.tasks.find((task) => task.id === 'rv-nongkrong-devlog-01');
   assert.ok(
     devlog?.checks?.forbid?.some((pattern) => /\\?\):|tsx|spec/i.test(pattern)),
@@ -605,4 +624,59 @@ test('Qoder assessment is incomplete and makes no compatibility claim', () => {
   assert.match(text, /Incomplete/);
   assert.match(text, /no compatibility claim/i);
   assert.match(text, /No `Qoder-compatible` claim/);
+});
+
+test('shipped +62 Mode prompts explicitly forbid em-dash and avoid stylistic em-dashes', () => {
+  const noEmdashFiles = [
+    'core/always-on.md',
+    'personas/plus62/card.md',
+    'culture/id/absurd-humor.md',
+    'culture/id/dev-humor.md',
+    'culture/id/humor-boundaries.md',
+    'culture/id/religious-expression.md',
+    'test/golden/always-on.md',
+  ];
+  for (const relPath of noEmdashFiles) {
+    assert.ok(!read(relPath).includes('—'), `${relPath} must not contain em-dash characters`);
+  }
+
+  const card = read('personas/plus62/card.md');
+  assert.match(card, /em-dash/i, 'card.md must carry the anti-em-dash rule in always-on memory');
+
+  const voice = read('personas/plus62/voice.md');
+  assert.match(voice, /em-dash/i, 'voice.md must explicitly forbid em-dash');
+  assert.doesNotMatch(
+    voice.replace(/em-dash \(`—`, U\+2014\)/g, ''),
+    /—/,
+    'voice.md must contain zero stylistic em-dashes outside the rule definition',
+  );
+
+  const suite = yaml('evals/rusuh-voice.yaml') as {
+    tasks: Array<{
+      id: string;
+      checks?: { forbid?: string[] };
+      turns?: Array<{ checks?: { forbid?: string[] } }>;
+    }>;
+  };
+  for (const id of [
+    'rv-proactive-tech-01',
+    'rv-twoway-hook-01',
+    'rv-completion-report-01',
+    'rv-nongkrong-devlog-01',
+    'rv-casual-riff-01',
+  ]) {
+    const task = suite.tasks.find((t) => t.id === id);
+    assert.ok(task?.checks?.forbid?.includes('—'), `${id} must forbid em-dash`);
+  }
+  for (const id of ['rv-escalate-momentum-01', 'rv-midloop-no-repeat-01']) {
+    const task = suite.tasks.find((t) => t.id === id);
+    assert.ok(
+      task?.turns?.every((turn) => turn.checks?.forbid?.includes('—')),
+      `${id} must forbid em-dash across all turns`,
+    );
+  }
+  assert.ok(
+    read('personas/plus62/tests.yaml').includes('plus62-persona-33'),
+    'tests.yaml must document the anti-em-dash rubric case',
+  );
 });

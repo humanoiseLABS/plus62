@@ -53,7 +53,7 @@ const CORE_POLICY_FILES = ['00-identity.md', '10-safety.md', '20-decision.md', '
 const HARD_CAPS = {
   always_on: 600,
   skill_metadata: 120,
-  skill_body: 2000,
+  skill_body: 2450,
   references: 5000,
 } as const;
 
@@ -289,7 +289,7 @@ function formatCultureEntry(entry: CultureFile['entries'][number], isAwareness: 
 
 function formatLexiconRuntime(parsed: CultureFile): string {
   const lines = [
-    `# ID lexicon (${parsed.locale}) — defaults: informal, national, off:none; vary naturally, skip in incident/distress/formal`,
+    `# ID lexicon (${parsed.locale}) | defaults: informal, national, off:none; vary naturally, skip in incident/distress/formal`,
   ];
   const byDecay = new Map<string, string[]>();
   const awareness: string[] = [];

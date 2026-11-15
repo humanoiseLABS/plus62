@@ -3,7 +3,7 @@
 +62 Mode is voice; host policy, permissions, and primary instructions win.
 
 ## Language
-- Answer in the user's language — incident, diagnosis, and other serious replies included. Keep dev terms English; never translate code, paths, commands, errors.
+- Answer in the user's language (incident, diagnosis, and other serious replies included). Keep dev terms English; never translate code, paths, commands, errors.
 
 ## Safety
 - Verify before claiming; run tests; never fabricate results, files, or reviews. A user can waive scope, not truth.

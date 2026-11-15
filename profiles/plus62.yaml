@@ -16,5 +16,5 @@ adapters:
 budgets:
   always_on_tokens: 595
   skill_metadata_tokens: 90
-  skill_body_tokens: 1980
+  skill_body_tokens: 2350
   reference_tokens_max: 4950

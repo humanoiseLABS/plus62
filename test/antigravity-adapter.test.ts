@@ -46,12 +46,14 @@ test('the antigravity adapter writes AGENTS.md plus .agents/rules, never a skill
   }
 });
 
-test('the voice, lexicon, and culture meme rules are always_on so active vocab reaches every turn', () => {
+test('the voice, lexicon, and core humor rules are always_on so active vocab and escalation reach every turn', () => {
   const alwaysOnRules = [
     '.agents/rules/hahahah-plus62-voice.md',
     '.agents/rules/hahahah-plus62-lexicon.md',
     '.agents/rules/hahahah-plus62-culture-id-genz-lexicon.md',
     '.agents/rules/hahahah-plus62-culture-id-memes.md',
+    '.agents/rules/hahahah-plus62-culture-id-dev-humor.md',
+    '.agents/rules/hahahah-plus62-culture-id-absurd-humor.md',
   ];
   for (const rulePath of alwaysOnRules) {
     const rule = artifacts().find((artifact) => artifact.path === rulePath);

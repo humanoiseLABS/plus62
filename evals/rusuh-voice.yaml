@@ -251,6 +251,7 @@ tasks:
         - 'Rincian slotnya'
         - '(?:^|\n)\s*1\.\s[\s\S]*\n\s*2\.\s'
         - 'Berikut penjelasan|Kesimpulan:'
+        - '—'
   - id: rv-twoway-hook-01
     tags: [voice, proactive-baseline, two-way]
     prompt: >-
@@ -264,6 +265,7 @@ tasks:
       forbid:
         - 'Tentu, saya akan membantu'
         - 'Sebagai AI'
+        - '—'
   - id: rv-completion-report-01
     tags: [voice, proactive-baseline, two-way]
     prompt: >-
@@ -281,6 +283,7 @@ tasks:
         - 'Berikut ringkasan'
         - '(?:^|\n)\s*1\.\s[\s\S]*\n\s*2\.\s'
         - 'Tentu, saya akan membantu'
+        - '—'
   - id: rv-nongkrong-devlog-01
     tags: [voice, proactive-baseline, vocab, two-way]
     prompt: >-
@@ -298,3 +301,66 @@ tasks:
         - '(?:^|\n)\s*-\s+[^\n]{3,45}\([\w./-]+\.(?:tsx?|css|kt|md)\):'
         - 'Tentu, saya akan membantu'
         - '(?:\bbre\b[\s\S]*){2,}'
+        - '—'
+  - id: rv-escalate-momentum-01
+    tags: [voice, adaptive, momentum-escalation, multi-turn]
+    turns:
+      - prompt: >-
+          Tanpa memakai tools. User nanya santai: "bro kenapa gradle build di
+          Windows lambat banget padahal cuma ganti satu file XML?" Jawab natural.
+        checks:
+          language: id
+          forbid:
+            - 'Tentu, saya akan membantu'
+            - 'Mohon maaf'
+            - '—'
+      - prompt: >-
+          Tanpa memakai tools. User mulai tantrum heboh bercanda: "ANJIR REBUILD
+          MULU CAPS LOCK JEBOL NIH GRADLE BIKIN DARAH TINGGI WKWK!!"
+        checks:
+          language: id
+          require:
+            - 'cache|daemon|gradle|build|configuration|task'
+          forbid:
+            - 'Mohon tetap tenang'
+            - 'Saya memahami frustrasi'
+            - 'Harap tenang'
+            - 'Tentu, saya akan membantu'
+            - '—'
+  - id: rv-casual-riff-01
+    tags: [voice, adaptive, casual-banter]
+    prompt: >-
+      Tanpa memakai tools. User lagi santai ngelempar obrolan tongkrongan
+      non-koding: "wkwk asli cuy hari ini otak gw udah kayak RAM 4GB buka
+      Android Studio 3 window". Balas obrolannya dengan gaya +62.
+    checks:
+      language: id
+      forbid:
+        - '(?:^|\n)\s*1\.\s[\s\S]*\n\s*2\.\s'
+        - 'Berikut beberapa tips'
+        - 'Tentu, saya akan membantu'
+        - '—'
+  - id: rv-midloop-no-repeat-01
+    tags: [voice, improvisation, midloop-anti-repeat, multi-turn]
+    turns:
+      - prompt: >-
+          Tanpa memakai tools. Kamu lagi nunggu unit test selesai jalan dan kasih
+          satu kabar singkat ke user pakai gaya +62.
+        checks:
+          language: id
+          forbid:
+            - 'Tentu, saya akan membantu'
+            - '—'
+      - prompt: >-
+          Tanpa memakai tools. Sekarang test udah ijo tapi kamu lanjut nunggu APK
+          release ke-install di HP; kasih update singkat yang transisi dan
+          penutupnya beda dari pesan barusan.
+        checks:
+          language: id
+          require:
+            - 'install|HP|APK|test'
+          forbid:
+            - 'tunggu bentar'
+            - 'Tunggu bentar'
+            - 'Tentu, saya akan membantu'
+            - '—'
