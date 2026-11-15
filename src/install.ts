@@ -265,7 +265,7 @@ export function install(options: InstallOptions): InstallResult {
       }
       continue;
     }
-    if (oldFile.sha256 !== artifact.sha256 && !options.force) {
+    if (sha256(readFileSync(target, 'utf8')) !== oldFile.sha256 && !options.force) {
       throw new InstallError(`Managed file was modified: ${artifact.path}; use --force`);
     }
   }
@@ -295,6 +295,12 @@ export function install(options: InstallOptions): InstallResult {
   validate('install', manifest, 'install manifest', options.sourceRoot);
 
   if (!options.dryRun) {
+    pruneRemovedManifestFiles(
+      targetRoot,
+      old,
+      new Set(artifactFiles.map((artifact) => artifact.path)),
+      options.force === true,
+    );
     pruneConflictingPersonas(targetRoot, artifactFiles, built.manifest.persona, adapterId);
     for (const artifact of artifactFiles) {
       writeAtomic(resolveInside(targetRoot, artifact.path), artifact.content);
@@ -316,6 +322,31 @@ export function install(options: InstallOptions): InstallResult {
     warnings: built.warnings,
     dryRun: options.dryRun === true,
   };
+}
+
+function pruneRemovedManifestFiles(
+  targetRoot: string,
+  old: InstallManifest | null,
+  nextPaths: Set<string>,
+  force: boolean,
+): void {
+  if (!old) {
+    return;
+  }
+  for (const file of old.files) {
+    if (nextPaths.has(file.path)) {
+      continue;
+    }
+    const target = resolveInside(targetRoot, file.path);
+    if (!existsSync(target)) {
+      continue;
+    }
+    if (!force && sha256(readFileSync(target, 'utf8')) !== file.sha256) {
+      continue;
+    }
+    unlinkSync(target);
+    pruneEmptyDirs(dirname(target), targetRoot);
+  }
 }
 
 function pruneConflictingPersonas(
@@ -426,8 +457,9 @@ try {
 }
 
 function pruneEmptyDirs(start: string, stop: string): void {
+  const stopPrefix = stop.endsWith(sep) ? stop : `${stop}${sep}`;
   let current = start;
-  while (current !== stop && current.startsWith(stop)) {
+  while (current !== stop && current.startsWith(stopPrefix)) {
     try {
       if (readdirSync(current).length > 0) {
         return;
@@ -579,7 +611,7 @@ export function update(options: {
     adapterId: old.adapter,
     scope: isGlobal ? 'global' : 'workspace',
     dryRun: options.dryRun,
-    force: true,
+    force: options.force === true,
   });
 }
 

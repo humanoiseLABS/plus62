@@ -18,6 +18,32 @@ function block(parts: string[]): string {
   return `${parts.join('\n')}\n`;
 }
 
+function flatRulePath(
+  root: string | null,
+  skillName: string,
+  kind: 'core' | 'culture',
+  referencePath: string,
+): string {
+  if (!root) {
+    throw new Error(`rules-dir layout requires a non-null target root for ${skillName}-${kind}`);
+  }
+  const flat = referencePath.replace(/[\\/]/g, '-').replace(/\.(?:yaml|yml|md)$/i, '.md');
+  const fileName = flat.endsWith('.md') ? flat : `${flat}.md`;
+  return `${root}/${skillName}-${kind}-${fileName}`;
+}
+
+const CULTURE_DESCRIPTIONS: Record<string, string> = {
+  'id/humor-boundaries.md': 'SARA, accent, distress, roast limits.',
+  'id/dev-humor.md': 'dev satire and stack critique.',
+  'id/absurd-humor.md': 'chaos pacing and anti-cringe.',
+  'id/religious-expression.md': 'non-fatwa etiquette.',
+};
+
+function cultureRuleDescription(displayName: string, referencePath: string): string {
+  const topic = CULTURE_DESCRIPTIONS[referencePath] ?? 'Indonesian culture & register.';
+  return `${displayName} (${referencePath}): ${topic}`;
+}
+
 function alwaysOnBlock(input: AdapterInput, extra: string[] = []): string {
   return block([
     marker(input),
@@ -63,48 +89,51 @@ export class GenericHarnessAdapter implements Adapter {
     }
 
     if (this.spec.layout === 'rules-dir') {
+      if (!root) {
+        throw new Error(`rules-dir layout requires a non-null target root for ${skillName}`);
+      }
+      const alwaysOnRule = (path: string, content: string, kind: 'skill_body' | 'reference') => ({
+        path,
+        content: block(['---', 'trigger: always_on', '---', '', content.trim()]),
+        kind,
+      });
+      const modelDecisionRule = (path: string, ruleDesc: string, content: string) => ({
+        path,
+        content: block([
+          '---',
+          'trigger: model_decision',
+          `description: ${JSON.stringify(ruleDesc)}`,
+          '---',
+          '',
+          content.trim(),
+        ]),
+        kind: 'reference' as const,
+      });
+      const isAlwaysOnCulture = (refPath: string) =>
+        /(?:^|\/)(?:genz-lexicon|memes)\.yaml$/i.test(refPath);
       const rules = [
-        {
-          path: `${root}/${skillName}-voice.md`,
-          content: block(['---', 'trigger: always_on', '---', '', input.voice.trim()]),
-          kind: 'skill_body' as const,
-        },
-        {
-          path: `${root}/${skillName}-lexicon.md`,
-          content: block([
-            '---',
-            'trigger: model_decision',
-            `description: "${input.persona.display_name} lexicon: Indonesian slang, register, and internet-culture terms."`,
-            '---',
-            '',
-            input.lexiconMarkdown.trim(),
-          ]),
-          kind: 'reference' as const,
-        },
-        ...input.coreRefs.map((reference) => ({
-          path: `${root}/${skillName}-core-${reference.path}`,
-          content: block([
-            '---',
-            'trigger: model_decision',
-            `description: "${input.persona.display_name} core policy ${reference.path}: identity, safety, decision, efficiency rules that outrank persona tone."`,
-            '---',
-            '',
-            reference.content.trim(),
-          ]),
-          kind: 'reference' as const,
-        })),
-        ...input.cultureRefs.map((reference) => ({
-          path: `${root}/${skillName}-culture-${reference.path}`,
-          content: block([
-            '---',
-            'trigger: model_decision',
-            `description: "${input.persona.display_name} culture reference ${reference.path}: Indonesian humor boundaries, memes, registers, religious-expression etiquette."`,
-            '---',
-            '',
-            reference.content.trim(),
-          ]),
-          kind: 'reference' as const,
-        })),
+        alwaysOnRule(`${root}/${skillName}-voice.md`, input.voice, 'skill_body'),
+        alwaysOnRule(`${root}/${skillName}-lexicon.md`, input.lexiconMarkdown, 'reference'),
+        ...input.coreRefs.map((reference) =>
+          modelDecisionRule(
+            flatRulePath(root, skillName, 'core', reference.path),
+            `${input.persona.display_name} (${reference.path}): overrides voice.`,
+            reference.content,
+          ),
+        ),
+        ...input.cultureRefs.map((reference) =>
+          isAlwaysOnCulture(reference.path)
+            ? alwaysOnRule(
+                flatRulePath(root, skillName, 'culture', reference.path),
+                reference.content,
+                'reference',
+              )
+            : modelDecisionRule(
+                flatRulePath(root, skillName, 'culture', reference.path),
+                cultureRuleDescription(input.persona.display_name, reference.path),
+                reference.content,
+              ),
+        ),
       ];
       return [
         {
@@ -114,6 +143,10 @@ export class GenericHarnessAdapter implements Adapter {
         },
         ...rules,
       ];
+    }
+
+    if (!root) {
+      throw new Error(`skill-tree layout requires a non-null target root for ${skillName}`);
     }
 
     // skill-tree: a SKILL.md entry plus references, under whichever root the vendor documents.

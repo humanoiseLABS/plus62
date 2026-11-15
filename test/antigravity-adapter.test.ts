@@ -32,12 +32,34 @@ test('the antigravity adapter writes AGENTS.md plus .agents/rules, never a skill
   assert.ok(paths.includes('.agents/rules/hahahah-plus62-voice.md'));
   assert.ok(paths.includes('.agents/rules/hahahah-plus62-lexicon.md'));
   assert.ok(paths.includes('.agents/rules/hahahah-plus62-core-10-safety.md'));
+  assert.ok(paths.includes('.agents/rules/hahahah-plus62-culture-id-genz-lexicon.md'));
+  assert.ok(paths.includes('.agents/rules/hahahah-plus62-culture-id-memes.md'));
+  for (const path of paths) {
+    if (!path.startsWith('.agents/rules/')) continue;
+    const relative = path.slice('.agents/rules/'.length);
+    assert.equal(
+      relative.includes('/'),
+      false,
+      `rule path must be flat under .agents/rules/: ${path}`,
+    );
+    assert.match(relative, /\.md$/, `antigravity rule must end in .md: ${path}`);
+  }
 });
 
-test('the voice rule is always_on and carries the adaptive engine', () => {
+test('the voice, lexicon, and culture meme rules are always_on so active vocab reaches every turn', () => {
+  const alwaysOnRules = [
+    '.agents/rules/hahahah-plus62-voice.md',
+    '.agents/rules/hahahah-plus62-lexicon.md',
+    '.agents/rules/hahahah-plus62-culture-id-genz-lexicon.md',
+    '.agents/rules/hahahah-plus62-culture-id-memes.md',
+  ];
+  for (const rulePath of alwaysOnRules) {
+    const rule = artifacts().find((artifact) => artifact.path === rulePath);
+    assert.ok(rule, `missing Antigravity rule: ${rulePath}`);
+    assert.match(rule.content, /^---\ntrigger: always_on\n---\n/, `${rulePath} must be always_on`);
+  }
   const voice = artifacts().find((artifact) => artifact.path.endsWith('voice.md'));
   assert.ok(voice);
-  assert.match(voice.content, /^---\ntrigger: always_on\n---\n/);
   assert.match(voice.content, /## Adaptive dynamics/);
 });
 

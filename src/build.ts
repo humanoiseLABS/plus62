@@ -239,18 +239,16 @@ function expiryIssues(persona: Persona, reviewables: ReviewableCulture[], today:
 }
 
 function renderLexicon(persona: Persona, lexicon: PersonaLexicon): string {
-  const lines = [
-    `# ${persona.display_name} lexicon whitelist (use in context; max 1/response & no-repeat unless noted)`,
-    ...lexicon.entries.map((entry) => {
-      const ref = entry.culture_ref.replace(/^id-/, '');
-      const cap =
-        entry.max_per_response !== undefined && entry.max_per_response !== 1
-          ? ` [max ${entry.max_per_response}]`
-          : '';
-      return `- ${ref}${cap}: ${entry.usage}`;
-    }),
-  ];
-  return lines.join('\n');
+  const header = `# ${persona.display_name} lexicon (rotate naturally; never spam 1 word)`;
+  const entries = lexicon.entries.map((entry) => {
+    const ref = entry.culture_ref.replace(/^id-/, '');
+    const cap =
+      entry.max_per_response !== undefined && entry.max_per_response !== 1
+        ? ` [max ${entry.max_per_response}]`
+        : '';
+    return `${ref}${cap}: ${entry.usage}`;
+  });
+  return `${header}\n${entries.join('; ')}`;
 }
 
 // Review metadata (reviewed_by, next_review, confidence, sources, expires) is what a human needs to
@@ -291,7 +289,7 @@ function formatCultureEntry(entry: CultureFile['entries'][number], isAwareness: 
 
 function formatLexiconRuntime(parsed: CultureFile): string {
   const lines = [
-    `# ID lexicon (${parsed.locale}) — defaults: informal, national, off:none, cap:1; avoid incident/distress/formal`,
+    `# ID lexicon (${parsed.locale}) — defaults: informal, national, off:none; vary naturally, skip in incident/distress/formal`,
   ];
   const byDecay = new Map<string, string[]>();
   const awareness: string[] = [];

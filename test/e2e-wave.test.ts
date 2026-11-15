@@ -682,8 +682,8 @@ test('Tier 4: TC-E2E-T4-01 - CLI distribution bundle verification (dist/cli.js b
   }).trim();
   assert.equal(
     versionOutput,
-    '0.2.0',
-    `CLI version output '${versionOutput}' must be '0.2.0' per Requirement R3`,
+    '0.2.1',
+    `CLI version output '${versionOutput}' must be '0.2.1' per release bump`,
   );
 
   const helpOutput = execSync('node dist/cli.js --help', {
@@ -759,13 +759,13 @@ test('Tier 4: TC-E2E-T4-02 - package tarball dry-run and file whitelist integrit
   const pkg = JSON.parse(read('package.json')) as PackageJson;
   assert.equal(
     pkg.version,
-    '0.2.0',
-    `package.json version '${pkg.version}' must be bumped to '0.2.0' per Requirement R3`,
+    '0.2.1',
+    `package.json version '${pkg.version}' must be bumped to '0.2.1' per release bump`,
   );
   assert.equal(
     packData.version,
-    '0.2.0',
-    `npm pack tarball version '${packData.version}' must be '0.2.0', got '${packData.version}'`,
+    '0.2.1',
+    `npm pack tarball version '${packData.version}' must be '0.2.1', got '${packData.version}'`,
   );
 });
 

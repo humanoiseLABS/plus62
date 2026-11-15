@@ -2,6 +2,17 @@
 
 All notable changes to `@humanoiselabs/plus62` (+62 Mode) will be documented in this file.
 
+## [0.2.1] - 2026-11-15
+
+### Changed
+- **Antigravity Always-On Slang & Flat Rules (`src/adapters/generic.ts`)**: Flattened generated `.agents/rules/` paths (`<skill>-core-*.md`, `<skill>-culture-*.md`) and emitted `trigger: always_on` for `lexicon`, `genz-lexicon`, and `memes` alongside `voice`, ensuring all 130 active corpus terms, 55 curated persona entries, 14 situational meme notes, and 29 awareness-only (`max_per_response: 0`) guardrails load automatically on every turn; quoted `model_decision` rule descriptions safely and added target-root validation for `rules-dir` and `skill-tree` layouts.
+- **55-Entry Curated Lexicon & Inline Compiler (`personas/plus62/lexicon.yaml`, `src/build.ts`)**: Expanded `personas/plus62/lexicon.yaml` from 15 to **55 active entries** and compacted `renderLexicon()` into inline semicolon-delimited phrasing so compiled runtime budgets stay within hard caps across adapters (`antigravity` `references: 4941/4950`, `claude-code` `4717/4950`).
+- **Proactive Warkop/Discord Voice Overhaul (`personas/plus62/{voice,card}.md`, `core/{always-on,30-efficiency}.md`, `culture/id/*`, `test/golden/always-on.md`)**: Replaced single-vocative `"bre"` priming with varied natural peer vocatives (`cuy`, `bray`, `lur`, `rek`, `suhu`), embedded an inline daily slang bank in `voice.md`, calibrated baseline casual banter from Turn 1, and added explicit `Jangan -> Gas` anti-patterns against stiff `1. 2. 3.` reports and spec-catalog bullet dumps.
+- **Evals & Suite Docs (`evals/rusuh-voice.yaml`, `personas/plus62/{examples.jsonl,tests.yaml}`, `README.md`, `test/*`)**: Added non-catalog devlog eval and manual rubric coverage (`rusuh-voice` now 21 tasks / 86 total across suites; `tests.yaml` now 29 cases) plus Antigravity adapter and installer lifecycle tests.
+
+### Fixed
+- **Installer Upgrade Hashing & Stale File Pruning (`src/install.ts`)**: Compared on-disk files against `oldFile.sha256` instead of `artifact.sha256` during upgrades so upstream changes no longer raise false modified-file errors, pruned obsolete managed files and empty subdirectories safely within the target root, and respected `update()`'s `force` option instead of forcing unconditionally.
+
 ## [0.2.0] - 2026-11-13
 
 ### Added

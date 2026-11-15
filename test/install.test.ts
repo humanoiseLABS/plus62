@@ -11,7 +11,12 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createHash } from 'node:crypto';
 import { install, uninstall, doctor, update } from '../src/install.ts';
+
+function sha256(text: string): string {
+  return createHash('sha256').update(text).digest('hex');
+}
 
 const sourceRoot = process.cwd();
 
@@ -222,6 +227,111 @@ test('refuses to overwrite an unmanaged skill file', () => {
     assert.throws(
       () => install({ sourceRoot, targetRoot, profileId: 'plus62' }),
       /force|unmanaged|exists/i,
+    );
+  } finally {
+    rmSync(targetRoot, { recursive: true, force: true });
+  }
+});
+
+test('update prunes stale manifest files from legacy rule layouts while keeping user rules', () => {
+  const targetRoot = tempProject();
+  try {
+    const rulesDir = join(targetRoot, '.agents/rules');
+    const userRulePath = join(rulesDir, 'projectego-android-ui.md');
+    mkdirSync(rulesDir, { recursive: true });
+    writeFileSync(userRulePath, '# keep custom android rule\n', 'utf8');
+
+    install({ sourceRoot, targetRoot, profileId: 'plus62', adapterId: 'antigravity' });
+
+    const legacyDir = join(rulesDir, 'hahahah-plus62-culture-id');
+    const legacyRel = '.agents/rules/hahahah-plus62-culture-id/genz-lexicon.yaml';
+    const legacyAbs = join(targetRoot, legacyRel);
+    const legacyContent = 'stale rule\n';
+    mkdirSync(legacyDir, { recursive: true });
+    writeFileSync(legacyAbs, legacyContent, 'utf8');
+
+    // Also simulate a managed file upgraded from an older shipped version whose on-disk hash still
+    // matches the installed manifest (not user-modified): unforced update() must upgrade cleanly.
+    const voiceRel = '.agents/rules/hahahah-plus62-voice.md';
+    const voiceAbs = join(targetRoot, voiceRel);
+    const previousVoiceContent = '# old voice release\n';
+    writeFileSync(voiceAbs, previousVoiceContent, 'utf8');
+
+    const manifestPath = join(targetRoot, '.plus62/manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      files: Array<{ path: string; sha256: string; tokens: number }>;
+    };
+    const voiceEntry = manifest.files.find((f) => f.path === voiceRel);
+    assert.ok(voiceEntry);
+    voiceEntry.sha256 = sha256(previousVoiceContent);
+    manifest.files.push({ path: legacyRel, sha256: sha256(legacyContent), tokens: 10 });
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+
+    update({ sourceRoot, targetRoot });
+
+    assert.equal(existsSync(legacyAbs), false, 'unmodified stale manifest file must be removed');
+    assert.equal(existsSync(legacyDir), false, 'empty legacy nested folder must be pruned');
+    assert.equal(
+      existsSync(join(rulesDir, 'hahahah-plus62-culture-id-genz-lexicon.md')),
+      true,
+      'flat .md culture rule must exist after update',
+    );
+    assert.equal(readFileSync(userRulePath, 'utf8'), '# keep custom android rule\n');
+    assert.equal(doctor({ targetRoot }).ok, true);
+  } finally {
+    rmSync(targetRoot, { recursive: true, force: true });
+  }
+});
+
+test('update preserves modified stale files and rejects modified kept files unless forced', () => {
+  const targetRoot = tempProject();
+  try {
+    install({ sourceRoot, targetRoot, profileId: 'plus62', adapterId: 'antigravity' });
+
+    const voiceRel = '.agents/rules/hahahah-plus62-voice.md';
+    const voiceAbs = join(targetRoot, voiceRel);
+    const originalVoice = readFileSync(voiceAbs, 'utf8');
+    writeFileSync(voiceAbs, `${originalVoice}\n# user local customization\n`, 'utf8');
+
+    assert.throws(
+      () => update({ sourceRoot, targetRoot }),
+      /force|modified/i,
+      'unforced update must refuse to overwrite a user-modified managed file',
+    );
+
+    // Restore active file to match manifest while leaving a user-edited stale manifest file behind.
+    writeFileSync(voiceAbs, originalVoice, 'utf8');
+    const staleRel = '.agents/rules/hahahah-plus62-culture-id/memes.yaml';
+    const staleAbs = join(targetRoot, staleRel);
+    mkdirSync(join(targetRoot, '.agents/rules/hahahah-plus62-culture-id'), { recursive: true });
+    writeFileSync(staleAbs, '# user edited before removal\n', 'utf8');
+
+    const manifestPath = join(targetRoot, '.plus62/manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      files: Array<{ path: string; sha256: string; tokens: number }>;
+    };
+    manifest.files.push({ path: staleRel, sha256: sha256('# shipped original\n'), tokens: 8 });
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+
+    update({ sourceRoot, targetRoot });
+    assert.equal(
+      existsSync(staleAbs),
+      true,
+      'unforced update must preserve user-modified stale manifest file',
+    );
+
+    // Put the stale entry back so update --force can clean it explicitly.
+    const nextManifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      files: Array<{ path: string; sha256: string; tokens: number }>;
+    };
+    nextManifest.files.push({ path: staleRel, sha256: sha256('# shipped original\n'), tokens: 8 });
+    writeFileSync(manifestPath, `${JSON.stringify(nextManifest, null, 2)}\n`, 'utf8');
+
+    update({ sourceRoot, targetRoot, force: true });
+    assert.equal(
+      existsSync(staleAbs),
+      false,
+      'forced update must prune stale manifest file even if modified',
     );
   } finally {
     rmSync(targetRoot, { recursive: true, force: true });

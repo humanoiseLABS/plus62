@@ -40,6 +40,16 @@ test('builds a deterministic fake-adapter plan with the persona card', () => {
     const spoken = readFileSync(join(outA, 'references/voice.md'), 'utf8');
     assert.ok(spoken.includes('+62 Mode'));
 
+    const lexiconRef = readFileSync(join(outA, 'references/lexicon.md'), 'utf8');
+    assert.doesNotMatch(lexiconRef, /max 1\/response/i);
+
+    const cultureLexicon = readFileSync(
+      join(outA, 'references/culture/id/genz-lexicon.yaml'),
+      'utf8',
+    );
+    assert.doesNotMatch(cultureLexicon, /\bcap:1\b/i);
+    assert.match(cultureLexicon, /Awareness-only \(cap 0; do not generate\)/);
+
     assert.doesNotThrow(() => validate('manifest', a.manifest));
     assert.ok(existsSync(join(outA, 'manifest.json')));
   } finally {
@@ -168,9 +178,9 @@ test('measure-only build does not write artifacts', () => {
   }
 });
 
-test('every MVP profile builds within budget on both adapters', () => {
+test('every MVP profile builds within budget on all supported core adapters', () => {
   for (const profileId of ['plus62', 'rusuh-id']) {
-    for (const adapterId of ['fake', 'claude-code']) {
+    for (const adapterId of ['fake', 'claude-code', 'antigravity']) {
       const result = build({ root, profileId, adapterId, write: false });
       for (const [name, report] of Object.entries(result.manifest.budgets)) {
         assert.equal(
