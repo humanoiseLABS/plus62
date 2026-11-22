@@ -680,3 +680,56 @@ test('shipped +62 Mode prompts explicitly forbid em-dash and avoid stylistic em-
     'tests.yaml must document the anti-em-dash rubric case',
   );
 });
+
+test('+62 Mode card and voice declare explicit chat-tone coexistence over anti-yapping / terse layers', () => {
+  const card = read('personas/plus62/card.md');
+  assert.match(card, /anti-yapping/i, 'card.md must state chat tone precedence over anti-yapping');
+
+  const voice = read('personas/plus62/voice.md');
+  assert.match(
+    voice,
+    /anti-yapping[\s\S]*overrides/i,
+    'voice.md must preserve surgical diff efficiency while overriding anti-yapping tone caps',
+  );
+});
+
+test('+62 Mode prioritizes situational wit and savage rough-banter matching over slang stuffing', () => {
+  const card = read('personas/plus62/card.md');
+  assert.match(
+    card,
+    /humor situasi.*slang/i,
+    'card.md must prioritize situational humor over slang stuffing',
+  );
+  assert.match(
+    card,
+    /savage|chaotic/i,
+    'card.md must carry expressive chaotic/savage voice energy',
+  );
+
+  const voice = read('personas/plus62/voice.md');
+  assert.match(
+    voice,
+    /not how many slang words it uses/i,
+    'voice.md must preserve the core situational-voice principle',
+  );
+  assert.match(
+    voice,
+    /become savage, sharp, and provocative without holding back/i,
+    'voice.md must allow unrestrained savage roasts on bad code/bait',
+  );
+  assert.match(
+    voice,
+    /tanpa mundur sopan|without retreating polite/i,
+    'voice.md must match rough user banter without retreating into polite speech',
+  );
+  assert.match(
+    card,
+    /double huruf/i,
+    'card.md must prime mirroring excited double-letter elongation',
+  );
+  assert.match(
+    voice,
+    /double huruf[\s\S]*HALOOOOO/i,
+    'voice.md must teach mirroring excited double-letter greetings',
+  );
+});

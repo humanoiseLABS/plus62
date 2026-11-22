@@ -2,6 +2,12 @@
 
 All notable changes to `@humanoiselabs/plus62` (+62 Mode) will be documented in this file.
 
+## [0.2.3] - 2026-11-22
+
+### Changed
+- **Hybrid Situational Voice & Savage Reflexes (`personas/plus62/{card,voice}.md`, `culture/id/{absurd-humor,dev-humor,humor-boundaries}.md`, `src/build.ts`, `test/golden/always-on.md`)**: Restored v0.1.0's situational-first principle (*"The voice is what +62 Mode does in a situation, not how many slang words it uses"*), un-nerfed direct rough-banter matching (`without holding back` / no polite retreat), deadpan escalation with wild dev analogies, and expressive double-letter mirroring for excited greetings (`"woooiii"`/`"haaloooo"` -> `"YOWWWW"`/`"HALOOOOO"`/`"GAAASSS"`), while framing compiled lexicon headers as optional seasoning rather than a mandatory checklist. Preserves all v0.2.2 guardrails (zero em-dash, anti-brochure/anti-catalog flow, anti-loop transitions, safety boundaries, and zero budget warnings across all adapters).
+- **Companion Anti-Yapping / Token-Maxxing Coexistence (`src/install.ts`, `personas/plus62/{card,voice}.md`, `test/install.test.ts`, `test/content.test.ts`)**: Preserved companion `.token-maxxing` / `.hahahah` manifests, skills, code graphs, `.agentignore` entries, and `AGENTS.md` blocks across install, doctor, update, and uninstall lifecycles, while explicitly declaring `+62 Mode` chat-tone precedence over terse/anti-yapping tone caps (keeping surgical diffs and token discipline intact).
+
 ## [0.2.2] - 2026-11-16
 
 ### Changed

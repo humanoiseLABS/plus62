@@ -19,6 +19,8 @@ import type { InstallManifest, MeasuredArtifact } from './types.ts';
 
 const MANIFEST_PATH = '.plus62/manifest.json';
 const LEGACY_MANIFEST_PATH = '.hahahah/manifest.json';
+const COMPANION_MANIFEST_PATHS = ['.token-maxxing/manifest.json', LEGACY_MANIFEST_PATH];
+const OWN_PROFILES = new Set(['plus62', 'rusuh-id']);
 const BLOCK_PATH = 'CLAUDE.md';
 const BLOCK_BEGIN = /<!-- (?:plus62|hahahah):begin [^\n]*-->/;
 const BLOCK_END = /<!-- (?:plus62|hahahah):end -->/;
@@ -64,18 +66,20 @@ export function setupAgentIgnore(
 }
 
 export function cleanAgentIgnore(targetRoot: string): void {
+  const preserveCompanion = readCompanionManifests(targetRoot).length > 0;
   for (const filename of ['.claudeignore', '.agentignore']) {
     const filePath = join(targetRoot, filename);
     if (!existsSync(filePath)) continue;
     try {
       const content = readFileSync(filePath, 'utf8');
-      const stripped = content
-        .replace(RECOMMENDED_AGENT_IGNORE, '')
-        .replace(
-          /# (?:plus62|token-maxxing|anti-yapping): input token saver[\s\S]*?(?=(?:\n\n)|$)/g,
-          '',
-        )
-        .trim();
+      let stripped = content.replace(RECOMMENDED_AGENT_IGNORE, '');
+      stripped = preserveCompanion
+        ? stripped.replace(/# plus62: input token saver[\s\S]*?(?=(?:\n\n)|$)/g, '')
+        : stripped.replace(
+            /# (?:plus62|token-maxxing|anti-yapping): input token saver[\s\S]*?(?=(?:\n\n)|$)/g,
+            '',
+          );
+      stripped = stripped.trim();
       if (stripped === '') {
         unlinkSync(filePath);
       } else {
@@ -134,24 +138,61 @@ function resolveInside(base: string, child: string): string {
   return target;
 }
 
-function readManifest(targetRoot: string): InstallManifest | null {
-  let path = join(targetRoot, MANIFEST_PATH);
+function tryReadRawManifest(path: string, strict: boolean): InstallManifest | null {
   if (!existsSync(path)) {
-    const legacyPath = join(targetRoot, LEGACY_MANIFEST_PATH);
-    if (existsSync(legacyPath)) {
-      path = legacyPath;
-    } else {
-      return null;
-    }
+    return null;
   }
   let data: unknown;
   try {
     data = JSON.parse(readFileSync(path, 'utf8'));
   } catch {
-    throw new InstallError(`Unreadable install manifest: ${path}`);
+    if (strict) {
+      throw new InstallError(`Unreadable install manifest: ${path}`);
+    }
+    return null;
   }
-  validate('install', data, MANIFEST_PATH);
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    typeof (data as { profile?: unknown }).profile !== 'string'
+  ) {
+    if (strict) {
+      validate('install', data, path);
+    }
+    return null;
+  }
   return data as InstallManifest;
+}
+
+function readCompanionManifests(targetRoot: string): InstallManifest[] {
+  const companions: InstallManifest[] = [];
+  for (const relPath of COMPANION_MANIFEST_PATHS) {
+    const data = tryReadRawManifest(join(targetRoot, relPath), false);
+    if (data && !OWN_PROFILES.has(data.profile)) {
+      companions.push(data);
+    }
+  }
+  return companions;
+}
+
+function readManifest(targetRoot: string): InstallManifest | null {
+  const primaryPath = join(targetRoot, MANIFEST_PATH);
+  if (existsSync(primaryPath)) {
+    const data = tryReadRawManifest(primaryPath, true);
+    validate('install', data, MANIFEST_PATH);
+    return data;
+  }
+  const legacyPath = join(targetRoot, LEGACY_MANIFEST_PATH);
+  if (!existsSync(legacyPath)) {
+    return null;
+  }
+  const legacy = tryReadRawManifest(legacyPath, true);
+  // Ignore .hahahah/manifest.json when it belongs to a companion package such as anti-yapping/token-maxxing.
+  if (!legacy || !OWN_PROFILES.has(legacy.profile)) {
+    return null;
+  }
+  validate('install', legacy, LEGACY_MANIFEST_PATH);
+  return legacy;
 }
 
 function writeAtomic(path: string, content: string): void {
@@ -168,26 +209,63 @@ interface ParsedBlock {
   hash: string;
 }
 
-function parseBlock(text: string): ParsedBlock | null {
-  const begins = [...text.matchAll(new RegExp(BLOCK_BEGIN.source, 'g'))];
-  const ends = [...text.matchAll(new RegExp(BLOCK_END.source, 'g'))];
-  if (begins.length === 0 && ends.length === 0) {
-    return null;
+interface BlockPair extends ParsedBlock {
+  profile: string | null;
+}
+
+function parseAllBlocks(text: string): BlockPair[] {
+  const tokenRe = /<!-- (?:plus62|hahahah):begin [^\n]*-->|<!-- (?:plus62|hahahah):end -->/g;
+  const pairs: BlockPair[] = [];
+  let active: { start: number; profile: string | null } | null = null;
+
+  for (const match of text.matchAll(tokenRe)) {
+    const token = match[0];
+    const index = match.index;
+    if (index === undefined) continue;
+
+    if (token.includes(':begin ')) {
+      if (active !== null) {
+        throw new InstallError('Malformed or duplicate +62 Mode managed block markers');
+      }
+      const profileMatch = token.match(/\bprofile=([^\s>]+)/);
+      active = { start: index, profile: profileMatch ? profileMatch[1]! : null };
+      continue;
+    }
+
+    if (active === null) {
+      throw new InstallError('Malformed +62 Mode managed block order');
+    }
+    const endIndex = index + token.length;
+    const content = text.slice(active.start, endIndex);
+    pairs.push({
+      profile: active.profile,
+      start: active.start,
+      end: endIndex,
+      content,
+      hash: sha256(content.trimEnd()),
+    });
+    active = null;
   }
-  if (begins.length !== 1 || ends.length !== 1) {
+
+  if (active !== null) {
     throw new InstallError('Malformed or duplicate +62 Mode managed block markers');
   }
-  const begin = begins[0];
-  const end = ends[0];
-  if (!begin || !end) {
-    throw new InstallError('Malformed +62 Mode managed block markers');
+  return pairs;
+}
+
+function parseBlock(text: string): ParsedBlock | null {
+  // Ignore companion blocks (e.g. profile=anti-yapping / token-maxxing) so both layers coexist cleanly.
+  const ownBlocks = parseAllBlocks(text).filter(
+    (pair) => pair.profile === null || OWN_PROFILES.has(pair.profile),
+  );
+  if (ownBlocks.length === 0) {
+    return null;
   }
-  if (begin.index === undefined || end.index === undefined || end.index < begin.index) {
-    throw new InstallError('Malformed +62 Mode managed block order');
+  if (ownBlocks.length > 1) {
+    throw new InstallError('Malformed or duplicate +62 Mode managed block markers');
   }
-  const endIndex = end.index + end[0].length;
-  const content = text.slice(begin.index, endIndex);
-  return { start: begin.index, end: endIndex, content, hash: sha256(content.trimEnd()) };
+  const match = ownBlocks[0]!;
+  return { start: match.start, end: match.end, content: match.content, hash: match.hash };
 }
 
 function blockContent(artifact: MeasuredArtifact): string {
@@ -349,6 +427,20 @@ function pruneRemovedManifestFiles(
   }
 }
 
+function protectedCompanionPersonas(targetRoot: string): Set<string> {
+  const protectedDirs = new Set<string>();
+  const isTempTest = targetRoot.startsWith(resolve(tmpdir()));
+  const roots = isTempTest ? [targetRoot] : [targetRoot, homedir()];
+  for (const root of roots) {
+    for (const companion of readCompanionManifests(root)) {
+      if (companion.persona) {
+        protectedDirs.add(`hahahah-${companion.persona}`);
+      }
+    }
+  }
+  return protectedDirs;
+}
+
 function pruneConflictingPersonas(
   targetRoot: string,
   artifactFiles: MeasuredArtifact[],
@@ -356,6 +448,7 @@ function pruneConflictingPersonas(
   adapterId: string,
 ): void {
   const activeDirName = `hahahah-${activePersona}`;
+  const protectedDirs = protectedCompanionPersonas(targetRoot);
   const skillEntry = artifactFiles.find((file) => file.path.endsWith('/SKILL.md'));
   const rootsToClean: string[] = [];
   if (skillEntry) {
@@ -372,7 +465,8 @@ function pruneConflictingPersonas(
         if (
           entry.isDirectory() &&
           entry.name.startsWith('hahahah-') &&
-          entry.name !== activeDirName
+          entry.name !== activeDirName &&
+          !protectedDirs.has(entry.name)
         ) {
           rmSync(join(skillsRoot, entry.name), { recursive: true, force: true });
         }
@@ -508,7 +602,11 @@ export function uninstall(options: {
 
   if (!options.dryRun) {
     if (parsed) {
-      const remaining = `${existingClaude.slice(0, parsed.start)}${existingClaude.slice(parsed.end)}`;
+      const before = existingClaude.slice(0, parsed.start);
+      const rawAfter = existingClaude.slice(parsed.end);
+      const after =
+        parsed.start === 0 ? rawAfter.replace(/^\n+/, '') : rawAfter.replace(/^\n{2,}/, '\n');
+      const remaining = `${before}${after}`;
       const cleaned = `${remaining.trimEnd()}${remaining.trim() ? '\n' : ''}`;
       if (old.created_claude_md && cleaned.trim() === '') {
         unlinkSync(claudePath);
@@ -516,9 +614,17 @@ export function uninstall(options: {
         writeAtomic(claudePath, cleaned);
       }
     }
-    removeCodeGraph(targetRoot);
+    const hasCompanion = readCompanionManifests(targetRoot).length > 0;
+    if (!hasCompanion) {
+      removeCodeGraph(targetRoot);
+    }
     cleanAgentIgnore(targetRoot);
-    for (const manifestPath of [MANIFEST_PATH, LEGACY_MANIFEST_PATH]) {
+    const legacyManifest = tryReadRawManifest(join(targetRoot, LEGACY_MANIFEST_PATH), false);
+    const manifestsToRemove =
+      legacyManifest && !OWN_PROFILES.has(legacyManifest.profile)
+        ? [MANIFEST_PATH]
+        : [MANIFEST_PATH, LEGACY_MANIFEST_PATH];
+    for (const manifestPath of manifestsToRemove) {
       const p = join(targetRoot, manifestPath);
       if (existsSync(p)) {
         unlinkSync(p);

@@ -337,3 +337,84 @@ test('update preserves modified stale files and rejects modified kept files unle
     rmSync(targetRoot, { recursive: true, force: true });
   }
 });
+
+test('install, doctor, update, and uninstall coexist cleanly with companion anti-yapping / token-maxxing installs', () => {
+  const targetRoot = tempProject();
+  try {
+    const antiYappingBlock = [
+      '<!-- hahahah:begin profile=anti-yapping version=0.2.4 -->',
+      '# Anti-Yapping core',
+      'Mesin efisiensi: surgical diffs.',
+      '<!-- hahahah:end -->',
+      '',
+    ].join('\n');
+    const companionSkill = join(targetRoot, '.claude/skills/hahahah-terse/SKILL.md');
+    const companionGraph = join(targetRoot, '.hahahah/graph/INDEX.md');
+    const companionManifestPath = join(targetRoot, '.hahahah/manifest.json');
+    const companionIgnore = '# token-maxxing: input token saver\nnode_modules/\n';
+
+    mkdirSync(join(targetRoot, '.claude/skills/hahahah-terse'), { recursive: true });
+    mkdirSync(join(targetRoot, '.hahahah/graph'), { recursive: true });
+    writeFileSync(join(targetRoot, 'AGENTS.md'), antiYappingBlock, 'utf8');
+    writeFileSync(companionSkill, '# terse skill\n', 'utf8');
+    writeFileSync(companionGraph, '# graph index\n', 'utf8');
+    writeFileSync(join(targetRoot, '.agentignore'), companionIgnore, 'utf8');
+    writeFileSync(
+      companionManifestPath,
+      JSON.stringify(
+        {
+          schema: 'hahahah.install/v1',
+          generated_by: 'hahahah@0.2.13',
+          profile: 'anti-yapping',
+          persona: 'terse',
+          adapter: 'opencode',
+          installed_at: '2026-11-10T04:44:21.739Z',
+          files: [
+            {
+              path: '.claude/skills/hahahah-terse/SKILL.md',
+              sha256: sha256('# terse skill\n'),
+              tokens: 3,
+            },
+          ],
+          block: { path: 'AGENTS.md', sha256: sha256(antiYappingBlock.trimEnd()) },
+          created_claude_md: false,
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+
+    const installed = install({
+      sourceRoot,
+      targetRoot,
+      profileId: 'plus62',
+      adapterId: 'opencode',
+    });
+    assert.equal(installed.manifest.profile, 'plus62');
+    assert.equal(doctor({ targetRoot }).ok, true);
+
+    const agentsAfterInstall = readFileSync(join(targetRoot, 'AGENTS.md'), 'utf8');
+    assert.ok(
+      agentsAfterInstall.includes(antiYappingBlock.trimEnd()),
+      'anti-yapping block must stay intact',
+    );
+    assert.match(agentsAfterInstall, /<!-- hahahah:begin profile=plus62/);
+    assert.equal(existsSync(companionSkill), true, 'companion terse skill must not be pruned');
+    assert.equal(existsSync(companionManifestPath), true, 'companion manifest must stay intact');
+
+    assert.equal(update({ sourceRoot, targetRoot }).manifest.profile, 'plus62');
+    assert.equal(doctor({ targetRoot }).ok, true);
+
+    uninstall({ targetRoot });
+    const agentsAfterUninstall = readFileSync(join(targetRoot, 'AGENTS.md'), 'utf8');
+    assert.equal(agentsAfterUninstall, antiYappingBlock);
+    assert.equal(existsSync(companionSkill), true);
+    assert.equal(existsSync(companionGraph), true, 'companion code graph must stay intact');
+    assert.equal(existsSync(companionManifestPath), true);
+    assert.equal(readFileSync(join(targetRoot, '.agentignore'), 'utf8'), companionIgnore);
+    assert.equal(existsSync(join(targetRoot, '.plus62/manifest.json')), false);
+  } finally {
+    rmSync(targetRoot, { recursive: true, force: true });
+  }
+});

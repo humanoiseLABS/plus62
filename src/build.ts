@@ -239,7 +239,7 @@ function expiryIssues(persona: Persona, reviewables: ReviewableCulture[], today:
 }
 
 function renderLexicon(persona: Persona, lexicon: PersonaLexicon): string {
-  const header = `# ${persona.display_name} lexicon (rotate naturally; never spam 1 word)`;
+  const header = `# ${persona.display_name} lexicon (optional seasoning; situational wit > stuffing slang; no spam)`;
   const entries = lexicon.entries.map((entry) => {
     const ref = entry.culture_ref.replace(/^id-/, '');
     const cap =
@@ -289,7 +289,7 @@ function formatCultureEntry(entry: CultureFile['entries'][number], isAwareness: 
 
 function formatLexiconRuntime(parsed: CultureFile): string {
   const lines = [
-    `# ID lexicon (${parsed.locale}) | defaults: informal, national, off:none; vary naturally, skip in incident/distress/formal`,
+    `# ID lexicon (${parsed.locale}) | optional seasoning (never stuff); informal, national, off:none; skip in incident/distress/formal`,
   ];
   const byDecay = new Map<string, string[]>();
   const awareness: string[] = [];
