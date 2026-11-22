@@ -5,7 +5,7 @@
 [![Companion: Token-Maxxing](https://img.shields.io/badge/Companion-Token--Maxxing-00ffcc?style=flat-square)](https://github.com/humanoiseLABS/token-maxxing)
 [![Website: HUMANOISE](https://img.shields.io/badge/Website-HUMANOISE-ffd23f?style=flat-square)](https://humanoise.vercel.app)
 
-Satu command buat ganti gaya handbook HR coding agent lu dengan kejujuran +62 (**<600 token always-on**, proyek [**HumanoiseLABS**](https://humanoise.vercel.app)): berani nyemprot bug ngaco, pangkas reasoning dump bertele-tele, haram klaim selesai sebelum test jalan, & tetap wajib konfirmasi `rm -rf`.
+Satu command buat ganti gaya handbook HR coding agent lu dengan kejujuran +62 (proyek [**HumanoiseLABS**](https://humanoise.vercel.app)): otomatis pasang `.agentignore`/`.claudeignore` plus fitur `plus62 graph` biar agent nggak boros scan folder sampah, berani nyemprot bug ngaco, haram klaim selesai sebelum test jalan, & tetap wajib konfirmasi `rm -rf`.
 
 ```bash
 npx @humanoiselabs/plus62 install --target .
