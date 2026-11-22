@@ -5,14 +5,11 @@
 [![Companion: Token-Maxxing](https://img.shields.io/badge/Companion-Token--Maxxing-00ffcc?style=flat-square)](https://github.com/humanoiseLABS/token-maxxing)
 [![Website: HUMANOISE](https://img.shields.io/badge/Website-HUMANOISE-ffd23f?style=flat-square)](https://humanoise.vercel.app)
 
-**HumanoiseLABS (`@humanoiseLABS`)** builds zero-fluff instruction & guardrail layers for AI coding agents across two flagship products:
+Satu command buat ganti gaya handbook HR coding agent lu dengan kejujuran +62 (**<600 token always-on**, proyek [**HumanoiseLABS**](https://humanoise.vercel.app)): berani nyemprot bug ngaco, pangkas reasoning dump bertele-tele, haram klaim selesai sebelum test jalan, & tetap wajib konfirmasi `rm -rf`.
 
-| Product | Package / Repo | Focus | Install Command |
-|---|---|---|---|
-| **+62 Mode** *(this repo)* | [`@humanoiselabs/plus62`](https://www.npmjs.com/package/@humanoiselabs/plus62) ([`humanoiseLABS/plus62`](https://github.com/humanoiseLABS/plus62)) | **Partner Ngoding Lokal (+62 Bloko Suto)** — Bahasa Indonesia developer persona (`lu/gw`), zero corporate preamble, suppresses leaked reasoning dumps, cultural lexicon, & Risk Class 0–4 safety guardrails. Binaries: `plus62`, `62-mode`, `hahahah-ai`, `hahahah`. | `npx @humanoiselabs/plus62 install` |
-| **Token-Maxxing** *(companion product)* | [`@humanoiselabs/token-maxxing`](https://www.npmjs.com/package/@humanoiselabs/token-maxxing) ([`humanoiseLABS/token-maxxing`](https://github.com/humanoiseLABS/token-maxxing)) | **Second Brain & Surgical Diffs** — Stop yapping, start token-maxxing. Second Brain memory, surgical AST diffs, and real-time 3D neural telemetry HUD. Binaries: `token-maxxing`, `tmx`. | `npx @humanoiselabs/token-maxxing install` *(or `tmx`)* |
-
-*(Note: Internally in this repository, **+62 Mode** uses the canonical profile ID `plus62` (with backward-compatible alias `rusuh-id`), which is enabled by default so you never need to pass `--profile` manually. Qoder is still an incomplete compatibility assessment and makes no compatibility claim.)*
+```bash
+npx @humanoiselabs/plus62 install --target .
+```
 
 ## Showcase (+62 Mode in Action)
 
@@ -100,6 +97,17 @@ npx @humanoiselabs/plus62 uninstall --target .
 npm install -g @humanoiselabs/plus62
 plus62 install --target .
 ```
+
+*(Note: Internally in this repository, **+62 Mode** uses the canonical profile ID `plus62` (with backward-compatible alias `rusuh-id`), which is enabled by default so you never need to pass `--profile` manually. Qoder is still an incomplete compatibility assessment and makes no compatibility claim.)*
+
+## HumanoiseLABS Ecosystem
+
+**HumanoiseLABS (`@humanoiseLABS`)** builds zero-fluff instruction & guardrail layers for AI coding agents across two flagship products:
+
+| Product | Package / Repo | Focus | Install Command |
+|---|---|---|---|
+| **+62 Mode** *(this repo)* | [`@humanoiselabs/plus62`](https://www.npmjs.com/package/@humanoiselabs/plus62) ([`humanoiseLABS/plus62`](https://github.com/humanoiseLABS/plus62)) | **Partner Ngoding Lokal (+62 Bloko Suto)** — Bahasa Indonesia developer persona (`lu/gw`), zero corporate preamble, suppresses leaked reasoning dumps, cultural lexicon, & Risk Class 0–4 safety guardrails. Binaries: `plus62`, `62-mode`, `hahahah-ai`, `hahahah`. | `npx @humanoiselabs/plus62 install` |
+| **Token-Maxxing** *(companion product)* | [`@humanoiselabs/token-maxxing`](https://www.npmjs.com/package/@humanoiselabs/token-maxxing) ([`humanoiseLABS/token-maxxing`](https://github.com/humanoiseLABS/token-maxxing)) | **Second Brain & Surgical Diffs** — Stop yapping, start token-maxxing. Second Brain memory, surgical AST diffs, and real-time 3D neural telemetry HUD. Binaries: `token-maxxing`, `tmx`. | `npx @humanoiselabs/token-maxxing install` *(or `tmx`)* |
 
 ## 🤖 AI Self-Install Instructions (Jika User Menyuruh AI Memasang via Prompt / Repo / ZIP)
 
